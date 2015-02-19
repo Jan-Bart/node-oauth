@@ -68,9 +68,9 @@ vows.describe('OAuth').addBatch({
         'we get a valid oauth signature': function (oa) {
             var signatureBase = "GET&http%3A%2F%2Fphotos.example.net%2Fphotos&file%3Dvacation.jpg%26oauth_consumer_key%3Ddpf43f3p2l4k3l03%26oauth_nonce%3Dkllo9940pd9333jh%26oauth_signature_method%3DRSA-SHA1%26oauth_timestamp%3D1191242096%26oauth_token%3Dnnch734d00sl2jdk%26oauth_version%3D1.0%26size%3Doriginal";
             var oauthSignature = oa._createSignature(signatureBase, "xyz4992k83j47x0b");
-            
+
             assert.equal( oauthSignature, "qS4rhWog7GPgo4ZCJvUdC/1ZAax/Q4Ab9yOBvgxSopvmKUKp5rso+Zda46GbyN2hnYDTiA/g3P/d/YiPWa454BEBb/KWFV83HpLDIoqUUhJnlXX9MqRQQac0oeope4fWbGlfTdL2PXjSFJmvfrzybERD/ZufsFtVrQKS3QBpYiw=");
-            
+
             //now check that given the public key we can verify this signature
             var verifier = crypto.createVerify("RSA-SHA1").update(signatureBase);
             var valid = verifier.verify(RsaPublicKey, oauthSignature, 'base64');
@@ -163,11 +163,18 @@ vows.describe('OAuth').addBatch({
     'When preparing the parameters for use in signing': {
       topic: new OAuth(null, null, null, null, null, null, "HMAC-SHA1"),
       'We need to be wary of node\'s auto object creation from foo[bar] style url parameters' : function(oa) {
-        var result= oa._prepareParameters( "", "", "", "http://foo.com?foo[bar]=xxx&bar[foo]=yyy", {} );
+        var result= oa._prepareParameters( "", "", "", "http://foo.com?foo[bar]=xxx&bar[foo]=yyy&multi=a&multi=b", {} );
         assert.equal( result[0][0], "bar[foo]")
         assert.equal( result[0][1], "yyy")
         assert.equal( result[1][0], "foo[bar]")
         assert.equal( result[1][1], "xxx")
+      },
+      'Make sure multi-value parameters don\'t get turned into foo[bar] style url parameters' : function(oa) {
+        var result= oa._prepareParameters( "", "", "", "http://foo.com?foo=bar&foo=baz", {} );
+        assert.equal( result[0][0], "foo")
+        assert.equal( result[0][1], "bar")
+        assert.equal( result[1][0], "foo")
+        assert.equal( result[1][1], "baz")
       }
     },
     'When signing a url': {
